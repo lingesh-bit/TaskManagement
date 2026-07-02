@@ -1,10 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity.Data;
-using TaskManagement.DTOs;
+﻿using TaskManagement.DTOs;
 
 namespace TaskManagement.Interfaces
 {
     public interface IAuthService
     {
-        LoginRequest? Authenticate(LoginDto login);
+        LoginResponseDto? Authenticate(LoginDto login);
     }
 }

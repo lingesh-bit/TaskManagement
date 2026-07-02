@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TaskManagement.DTOs;
 using TaskManagement.Interfaces;
 
 namespace TaskManagement.Controllers
@@ -12,6 +13,19 @@ namespace TaskManagement.Controllers
         public AuthController(IAuthService authService)
         {
             _authService = authService;
+        }
+
+        [HttpPost("login")]
+        public ActionResult<LoginResponseDto> Login([FromBody] LoginDto dto)
+        {
+            var result = _authService.Authenticate(dto);
+
+            if (result == null)
+            {
+                return Unauthorized(new { message = "Invalid username or password." });
+            }
+
+            return Ok(result);
         }
     }
 }
