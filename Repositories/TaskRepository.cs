@@ -22,12 +22,37 @@ namespace TaskManagement.Repositories
 
         public Task DeleteAsync(TaskItem task, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            _context.Tasks.Remove(task);
+            return Task.CompletedTask;
         }
 
-        public Task<(IEnumerable<TaskItem> Items, int TotalCount)> GetAllAsync(TaskState? status, bool sortDescending, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+
+        public async Task<(IEnumerable<TaskItem> Items, int TotalCount)> GetAllAsync(
+        TaskState? status,
+        bool sortDescending,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            var query = _context.Tasks.AsNoTracking().AsQueryable();
+
+            if (status.HasValue)
+            {
+                query = query.Where(t => t.Status == status.Value);
+            }
+
+            var totalCount = await query.CountAsync(cancellationToken);
+
+            query = sortDescending
+                ? query.OrderByDescending(t => t.DueDate)
+                : query.OrderBy(t => t.DueDate);
+
+            var items = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            return (items, totalCount);
         }
 
         public async Task<TaskItem?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -35,19 +60,22 @@ namespace TaskManagement.Repositories
             return await _context.Tasks.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
         }
 
-        public Task<List<TaskItem>> GetOverduePendingTasksAsync(DateTime asOfUtc, CancellationToken cancellationToken = default)
+        public async Task<List<TaskItem>> GetOverduePendingTasksAsync(DateTime asOfUtc, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
-        }
-
-        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
+            return await _context.Tasks
+                .Where(t => t.Status == TaskState.Pending && t.DueDate < asOfUtc)
+                .ToListAsync(cancellationToken);
         }
 
         public Task UpdateAsync(TaskItem task, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            _context.Tasks.Update(task);
+            return Task.CompletedTask;
+        }
+
+        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            return _context.SaveChangesAsync(cancellationToken);
         }
     }
 }

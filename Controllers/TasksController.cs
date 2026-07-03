@@ -31,5 +31,39 @@ namespace TaskManagement.Controllers
             var task = await _taskService.GetByIdAsync(id, cancellationToken);
             return Ok(task);
         }
+
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult<TaskResponseDto>> Update(int id, [FromBody] TaskUpdateDto dto, CancellationToken cancellationToken)
+        {
+            var updated = await _taskService.UpdateAsync(id, dto, cancellationToken);
+            return Ok(updated);
+        }
+
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+        {
+            var deleted = await _taskService.DeleteAsync(id, cancellationToken);
+            return NoContent();
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<PagedResultDto<TaskResponseDto>>> GetAll(
+        [FromQuery] Models.TaskState? status,
+        [FromQuery] bool sortDescending = false,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
+        {
+            var parameters = new TaskQueryParameters
+            {
+                Status = status,
+                SortDescending = sortDescending,
+                PageNumber = pageNumber < 1 ? 1 : pageNumber,
+                PageSize = pageSize
+            };
+
+            var result = await _taskService.GetAllAsync(parameters, cancellationToken);
+            return Ok(result);
+        }
     }
 }

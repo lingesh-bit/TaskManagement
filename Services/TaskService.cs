@@ -36,14 +36,38 @@ namespace TaskManagement.Services
             return TaskResponseDto.FromEntity(created);
         }
 
-        public Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            var entity = await _repository.GetByIdAsync(id, cancellationToken);
+            if (entity is null)
+            {
+                return false;
+            }
+
+            await _repository.DeleteAsync(entity, cancellationToken);
+            await _repository.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Deleted task {TaskId}", id);
+
+            return true;
         }
 
-        public Task<PagedResultDto<TaskResponseDto>> GetAllAsync(TaskQueryParameters parameters, CancellationToken cancellationToken = default)
+        public async Task<PagedResultDto<TaskResponseDto>> GetAllAsync(TaskQueryParameters parameters, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            var (items, totalCount) = await _repository.GetAllAsync(
+                parameters.Status,
+                parameters.SortDescending,
+                parameters.PageNumber,
+                parameters.PageSize,
+                cancellationToken);
+
+            return new PagedResultDto<TaskResponseDto>
+            {
+                Items = items.Select(TaskResponseDto.FromEntity),
+                PageNumber = parameters.PageNumber,
+                PageSize = parameters.PageSize,
+                TotalCount = totalCount
+            };
         }
 
         public async Task<TaskResponseDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -52,9 +76,26 @@ namespace TaskManagement.Services
             return task is null ? null : TaskResponseDto.FromEntity(task);
         }
 
-        public Task<TaskResponseDto?> UpdateAsync(int id, TaskUpdateDto dto, CancellationToken cancellationToken = default)
+        public async Task<TaskResponseDto?> UpdateAsync(int id, TaskUpdateDto dto, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            var entity = await _repository.GetByIdAsync(id, cancellationToken);
+            if (entity is null)
+            {
+                return null;
+            }
+
+            entity.Title = dto.Title.Trim();
+            entity.Description = dto.Description;
+            entity.DueDate = dto.DueDate;
+            entity.Status = dto.Status;
+            entity.UpdatedAt = DateTime.UtcNow;
+
+            await _repository.UpdateAsync(entity, cancellationToken);
+            await _repository.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Updated task {TaskId}", id);
+
+            return TaskResponseDto.FromEntity(entity);
         }
     }
 }
