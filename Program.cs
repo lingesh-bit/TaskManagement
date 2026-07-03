@@ -5,6 +5,7 @@ using Serilog;
 using System.Text;
 using TaskManagement.Data;
 using TaskManagement.Interfaces;
+using TaskManagement.Repositories;
 using TaskManagement.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,8 +30,9 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+builder.Services.AddScoped<ITaskRepository, TaskRepository>();
+builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
 var jwtSection = builder.Configuration.GetSection("Jwt");
