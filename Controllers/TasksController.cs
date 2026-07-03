@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TaskManagement.DTOs;
 using TaskManagement.Interfaces;
+using static TaskManagement.Middleware.AppExceptions;
 
 namespace TaskManagement.Controllers
 {
@@ -29,6 +30,10 @@ namespace TaskManagement.Controllers
         public async Task<ActionResult<TaskResponseDto>> GetById(int id, CancellationToken cancellationToken)
         {
             var task = await _taskService.GetByIdAsync(id, cancellationToken);
+            if (task is null)
+            {
+                throw new NotFoundException($"Task with Id {id} was not found.");
+            }
             return Ok(task);
         }
 
@@ -36,6 +41,10 @@ namespace TaskManagement.Controllers
         public async Task<ActionResult<TaskResponseDto>> Update(int id, [FromBody] TaskUpdateDto dto, CancellationToken cancellationToken)
         {
             var updated = await _taskService.UpdateAsync(id, dto, cancellationToken);
+            if (updated is null)
+            {
+                throw new NotFoundException($"Task with Id {id} was not found.");
+            }
             return Ok(updated);
         }
 
@@ -43,6 +52,10 @@ namespace TaskManagement.Controllers
         public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
             var deleted = await _taskService.DeleteAsync(id, cancellationToken);
+            if (!deleted)
+            {
+                throw new NotFoundException($"Task with Id {id} was not found.");
+            }
             return NoContent();
         }
 
