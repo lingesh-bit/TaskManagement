@@ -59,6 +59,15 @@ builder.Services
                 Encoding.UTF8.GetBytes(jwtKey))
         };
     });
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowNextJs", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 builder.Services.AddAuthorization();
 
@@ -71,6 +80,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("AllowNextJs");
 
 app.UseAuthentication();
 app.UseAuthorization();
